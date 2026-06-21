@@ -113,6 +113,7 @@
         let currentTargetFahrenheit = 360;
         let isWriting = false;
         let isDeviceLocked = false;
+        let pollingIntervalId = null;
 
         const connectBtn = document.getElementById('connect-btn');
         const statusBadge = document.getElementById('status-badge');
@@ -152,7 +153,11 @@
                 statusBadge.classList.remove('hidden');
                 controlsPanel.classList.remove('opacity-25', 'pointer-events-none');
 
+                // Initial diagnostic read
                 await readDeviceDiagnostics();
+
+                // Start automated 5-second background state polling loop
+                pollingIntervalId = setInterval(readDeviceDiagnostics, 5000);
             } catch (e) {
                 console.error(e);
                 connectBtn.innerText = "Connection Failed - Retry";
@@ -162,7 +167,7 @@
         function updateDialUI(fahrenheit) {
             const minF = 360, maxF = 420;
             const percentage = (fahrenheit - minF) / (maxF - minF);
-            const strokeDash = percentage * 540; // Recalibrated for larger 115px radius geometry
+            const strokeDash = percentage * 540; 
             
             dialProgress.style.strokeDasharray = `${strokeDash} 725`;
             
@@ -175,6 +180,7 @@
         }
 
         function processDialEvent(e) {
+            // Absolute Lock Short-Circuit: Completely freeze state computation and UX mapping if true
             if (isDeviceLocked) return;
             
             const rect = dialSvg.getBoundingClientRect();
@@ -199,13 +205,13 @@
             transmitTemperaturePacket(targetF);
         }
 
-        dialSvg.addEventListener('mousedown', () => isDraggingDial = true);
+        dialSvg.addEventListener('mousedown', () => { if(!isDeviceLocked) isDraggingDial = true; });
         window.addEventListener('mouseup', () => isDraggingDial = false);
-        dialSvg.addEventListener('mousemove', (e) => { if (isDraggingDial) processDialEvent(e); });
+        dialSvg.addEventListener('mousemove', (e) => { if (isDraggingDial && !isDeviceLocked) processDialEvent(e); });
         
-        dialSvg.addEventListener('touchstart', () => isDraggingDial = true);
+        dialSvg.addEventListener('touchstart', () => { if(!isDeviceLocked) isDraggingDial = true; });
         window.addEventListener('touchend', () => isDraggingDial = false);
-        dialSvg.addEventListener('touchmove', (e) => { if (isDraggingDial) processDialEvent(e); });
+        dialSvg.addEventListener('touchmove', (e) => { if (isDraggingDial && !isDeviceLocked) processDialEvent(e); });
 
         async function transmitTemperaturePacket(fahrenheit) {
             if (!writeCharacteristic || isWriting) return;
@@ -271,6 +277,8 @@
         function updateColorHardware(modeInt) { if(!isDeviceLocked) sendHardwareConfigCommand(0x03, modeInt); }
 
         async function readDeviceDiagnostics() {
+            // If dragging, or locked, skip background telemetry reads to avoid race conditions
+            if (!writeCharacteristic || isDraggingDial || isWriting) return;
             try {
                 const packetValue = await writeCharacteristic.readValue();
                 if (packetValue.byteLength >= 3) {
@@ -278,7 +286,10 @@
                     if (chargePct > 0) batteryDisplay.innerText = `🔋 ${chargePct}%`;
                 }
             } catch (e) {
-                batteryDisplay.innerText = "🔋 98%";
+                // If baseline testing without hardware, display mock data fallback smoothly
+                if (!writeCharacteristic) {
+                    batteryDisplay.innerText = "🔋 99%";
+                }
             }
         }
 
