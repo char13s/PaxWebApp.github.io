@@ -8,35 +8,33 @@
     <style>
         body { background-color: #111215; color: #f3f4f6; font-family: system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
         .radial-slider { cursor: pointer; touch-action: none; }
-        input[type="range"] { -webkit-appearance: none; appearance: none; background: #262930; height: 6px; border-radius: 9999px; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; background: #262930; height: 8px; border-radius: 9999px; }
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 20px; height: 20px; 
+            -webkit-appearance: none; appearance: none; width: 24px; height: 24px; 
             border-radius: 50%; background: #ffffff; border: 1px solid #d1d5db; cursor: pointer;
         }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-sm bg-[#181a1f] border border-gray-800/60 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between min-h-[820px]">
+    <div class="w-full max-w-sm bg-[#181a1f] border border-gray-800/60 rounded-[2.5rem] p-6 shadow-2xl flex flex-col justify-between min-h-[760px]">
         
         <div>
             <div class="flex justify-between items-center mb-6 px-2">
                 <div class="flex items-center space-x-2">
-                    <span class="text-sm font-semibold tracking-wide text-gray-400">PAX 3</span>
+                    <span class="text-xl font-bold tracking-wide text-gray-300">PAX 3</span>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span id="battery-display" class="text-xs font-mono text-gray-500">🔋 --%</span>
-                    <button class="text-gray-400 hover:text-white">🔓</button>
-                    <button class="text-gray-400 hover:text-white">⚙️</button>
-                    <button class="text-gray-400 hover:text-white">🔔</button>
+                <div class="flex items-center space-x-5">
+                    <span id="battery-display" class="text-base font-mono font-semibold text-gray-400">🔋 --%</span>
+                    <button id="lock-toggle-btn" onclick="toggleOvenLock()" class="text-2xl text-gray-400 hover:text-white transition active:scale-95">🔓</button>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center justify-center my-4 relative">
-                <svg width="240" height="240" class="radial-slider" id="dial-svg">
-                    <circle cx="120" cy="120" r="90" fill="none" stroke="#262930" stroke-width="12" stroke-dasharray="420 565" stroke-linecap="round" transform="rotate(135 120 120)"/>
-                    <circle id="dial-progress" cx="120" cy="120" r="90" fill="none" stroke="url(#gradient)" stroke-width="14" stroke-dasharray="0 565" stroke-linecap="round" transform="rotate(135 120 120)"/>
-                    <circle id="dial-knob" cx="120" cy="30" r="14" fill="#ffffff" />
+            <div class="flex flex-col items-center justify-center my-6 relative">
+                <svg width="300" height="300" class="radial-slider" id="dial-svg">
+                    <circle cx="150" cy="150" r="115" fill="none" stroke="#262930" stroke-width="14" stroke-dasharray="540 725" stroke-linecap="round" transform="rotate(135 150 150)"/>
+                    <circle id="dial-progress" cx="150" cy="150" r="115" fill="none" stroke="url(#gradient)" stroke-width="16" stroke-dasharray="0 725" stroke-linecap="round" transform="rotate(135 150 150)"/>
+                    <circle id="dial-knob" cx="150" cy="35" r="18" fill="#ffffff" />
                     
                     <defs>
                         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -46,9 +44,9 @@
                     </defs>
                 </svg>
 
-                <div class="absolute text-center mt-2 pointer-events-none">
-                    <span id="temp-display" class="text-5xl font-light tracking-tight text-white block">360°<span class="text-2xl align-super">F</span></span>
-                    <span id="oven-status" class="text-[10px] font-bold tracking-wider text-teal-400 uppercase block mt-1">STANDARD MODE ACTIVE</span>
+                <div class="absolute text-center pointer-events-none">
+                    <span id="temp-display" class="text-6xl font-light tracking-tight text-white block">360°<span class="text-3xl align-super">F</span></span>
+                    <span id="oven-status" class="text-xs font-bold tracking-wider text-teal-400 uppercase block mt-1">STANDARD MODE ACTIVE</span>
                 </div>
             </div>
 
@@ -58,11 +56,11 @@
                 </p>
             </div>
 
-            <div class="px-2 mb-4">
-                <button id="connect-btn" class="w-full py-3 bg-white text-black font-semibold rounded-full shadow transition active:scale-95 text-sm">
+            <div class="px-2 mb-5">
+                <button id="connect-btn" class="w-full py-4 bg-white text-black font-bold rounded-full shadow transition active:scale-95 text-base">
                     Connect Device
                 </button>
-                <div id="status-badge" class="hidden text-center py-2 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div id="status-badge" class="hidden text-center py-2.5 text-sm font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     Connected
                 </div>
             </div>
@@ -70,13 +68,13 @@
             <div id="controls-panel" class="space-y-6 opacity-25 pointer-events-none transition-opacity duration-300 px-1">
                 <div class="space-y-2">
                     <div class="grid grid-cols-3 gap-2">
-                        <button onclick="changeVaporMode(0, this)" class="mode-btn py-2 px-1 border border-gray-700 bg-white text-black rounded-full text-[10px] font-bold tracking-wider transition">STANDARD</button>
-                        <button onclick="changeVaporMode(1, this)" class="mode-btn py-2 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">BOOST</button>
-                        <button onclick="changeVaporMode(2, this)" class="mode-btn py-2 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">EFFICIENCY</button>
+                        <button onclick="changeVaporMode(0, this)" class="mode-btn py-2.5 px-1 border border-gray-700 bg-white text-black rounded-full text-[10px] font-bold tracking-wider transition">STANDARD</button>
+                        <button onclick="changeVaporMode(1, this)" class="mode-btn py-2.5 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">BOOST</button>
+                        <button onclick="changeVaporMode(2, this)" class="mode-btn py-2.5 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">EFFICIENCY</button>
                     </div>
                     <div class="grid grid-cols-2 gap-2 max-w-[80%] mx-auto">
-                        <button onclick="changeVaporMode(3, this)" class="mode-btn py-2 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">STEALTH</button>
-                        <button onclick="changeVaporMode(4, this)" class="mode-btn py-2 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">FLAVOR</button>
+                        <button onclick="changeVaporMode(3, this)" class="mode-btn py-2.5 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">STEALTH</button>
+                        <button onclick="changeVaporMode(4, this)" class="mode-btn py-2.5 px-1 border border-gray-700 rounded-full text-[10px] font-bold tracking-wider text-white bg-transparent hover:bg-gray-800 transition">FLAVOR</button>
                     </div>
                 </div>
 
@@ -96,20 +94,14 @@
                     <div class="space-y-2 pt-1">
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase block">Color Theme</label>
                         <div class="flex justify-between items-center px-2">
-                            <button onclick="updateColorHardware(0)" class="flex flex-col items-center space-y-1"><div class="w-5 h-5 rounded-full bg-white border border-gray-400"></div><span class="text-[9px] font-bold text-gray-500">DEFAULT</span></button>
-                            <button onclick="updateColorHardware(1)" class="flex flex-col items-center space-y-1"><div class="w-5 h-5 rounded-full bg-cyan-400"></div><span class="text-[9px] font-bold text-gray-500">OCEAN</span></button>
-                            <button onclick="updateColorHardware(2)" class="flex flex-col items-center space-y-1"><div class="w-5 h-5 rounded-full bg-amber-400"></div><span class="text-[9px] font-bold text-gray-500">SUNSET</span></button>
-                            <button onclick="updateColorHardware(3)" class="flex flex-col items-center space-y-1"><div class="w-5 h-5 rounded-full bg-rose-400"></div><span class="text-[9px] font-bold text-gray-500">MARS</span></button>
+                            <button onclick="updateColorHardware(0)" class="flex flex-col items-center space-y-1"><div class="w-6 h-6 rounded-full bg-white border border-gray-400"></div><span class="text-[9px] font-bold text-gray-500">DEFAULT</span></button>
+                            <button onclick="updateColorHardware(1)" class="flex flex-col items-center space-y-1"><div class="w-6 h-6 rounded-full bg-cyan-400"></div><span class="text-[9px] font-bold text-gray-500">OCEAN</span></button>
+                            <button onclick="updateColorHardware(2)" class="flex flex-col items-center space-y-1"><div class="w-6 h-6 rounded-full bg-amber-400"></div><span class="text-[9px] font-bold text-gray-500">SUNSET</span></button>
+                            <button onclick="updateColorHardware(3)" class="flex flex-col items-center space-y-1"><div class="w-6 h-6 rounded-full bg-rose-400"></div><span class="text-[9px] font-bold text-gray-500">MARS</span></button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-auto pt-4 border-t border-gray-900/60 flex justify-around text-gray-600 text-xl">
-            <button class="hover:text-white text-white">🔍</button>
-            <button class="hover:text-white text-teal-400 scale-125">❌</button>
-            <button class="hover:text-white">👤</button>
         </div>
     </div>
 
@@ -120,6 +112,7 @@
         let writeCharacteristic = null;
         let currentTargetFahrenheit = 360;
         let isWriting = false;
+        let isDeviceLocked = false;
 
         const connectBtn = document.getElementById('connect-btn');
         const statusBadge = document.getElementById('status-badge');
@@ -128,6 +121,7 @@
         const batteryDisplay = document.getElementById('battery-display');
         const ovenStatus = document.getElementById('oven-status');
         const modeDesc = document.getElementById('mode-description');
+        const lockToggleBtn = document.getElementById('lock-toggle-btn');
         
         const dialSvg = document.getElementById('dial-svg');
         const dialProgress = document.getElementById('dial-progress');
@@ -168,24 +162,26 @@
         function updateDialUI(fahrenheit) {
             const minF = 360, maxF = 420;
             const percentage = (fahrenheit - minF) / (maxF - minF);
-            const strokeDash = percentage * 420;
+            const strokeDash = percentage * 540; // Recalibrated for larger 115px radius geometry
             
-            dialProgress.style.strokeDasharray = `${strokeDash} 565`;
+            dialProgress.style.strokeDasharray = `${strokeDash} 725`;
             
             const angle = 135 + (percentage * 270);
             const rad = (angle * Math.PI) / 180;
-            const cx = 120 + 90 * Math.cos(rad);
-            const cy = 120 + 90 * Math.sin(rad);
+            const cx = 150 + 115 * Math.cos(rad);
+            const cy = 150 + 115 * Math.sin(rad);
             dialKnob.setAttribute('cx', cx);
             dialKnob.setAttribute('cy', cy);
         }
 
         function processDialEvent(e) {
+            if (isDeviceLocked) return;
+            
             const rect = dialSvg.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const x = clientX - rect.left - 120;
-            const y = clientY - rect.top - 120;
+            const x = clientX - rect.left - 150;
+            const y = clientY - rect.top - 150;
             
             let angle = (Math.atan2(y, x) * 180) / Math.PI;
             if (angle < 0) angle += 360;
@@ -198,7 +194,7 @@
             const targetF = Math.round(360 + pct * (420 - 360));
             
             currentTargetFahrenheit = targetF;
-            tempDisplay.innerHTML = `${targetF}°<span class="text-2xl align-super">F</span>`;
+            tempDisplay.innerHTML = `${targetF}°<span class="text-3xl align-super">F</span>`;
             updateDialUI(targetF);
             transmitTemperaturePacket(targetF);
         }
@@ -228,6 +224,27 @@
             }
         }
 
+        async function toggleOvenLock() {
+            if (!writeCharacteristic) return;
+            isDeviceLocked = !isDeviceLocked;
+
+            if (isDeviceLocked) {
+                lockToggleBtn.innerText = "🔒";
+                tempDisplay.innerHTML = `OFF`;
+                ovenStatus.innerText = "HEATER LOCKED / OVEN COLD";
+                dialProgress.style.strokeDasharray = `0 725`;
+                
+                const lockPayload = new Uint8Array([0x01, 0x0a, 0x00, 0x00]);
+                try { await writeCharacteristic.writeValueWithoutResponse(lockPayload); } catch(e) {}
+            } else {
+                lockToggleBtn.innerText = "🔓";
+                tempDisplay.innerHTML = `${currentTargetFahrenheit}°<span class="text-3xl align-super">F</span>`;
+                ovenStatus.innerText = "STANDARD MODE ACTIVE";
+                updateDialUI(currentTargetFahrenheit);
+                transmitTemperaturePacket(currentTargetFahrenheit);
+            }
+        }
+
         async function sendHardwareConfigCommand(opcode, value) {
             if (!writeCharacteristic) return;
             const packet = new Uint8Array([opcode, value]);
@@ -239,6 +256,7 @@
         }
 
         function changeVaporMode(modeInt, element) {
+            if (isDeviceLocked) return;
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('bg-white', 'text-black'));
             element.classList.add('bg-white', 'text-black');
             
@@ -248,9 +266,9 @@
             sendHardwareConfigCommand(0x04, modeInt);
         }
 
-        function updateHapticsHardware(val) { sendHardwareConfigCommand(0x01, parseInt(val)); }
-        function updateBrightnessHardware(val) { sendHardwareConfigCommand(0x02, parseInt(val)); }
-        function updateColorHardware(modeInt) { sendHardwareConfigCommand(0x03, modeInt); }
+        function updateHapticsHardware(val) { if(!isDeviceLocked) sendHardwareConfigCommand(0x01, parseInt(val)); }
+        function updateBrightnessHardware(val) { if(!isDeviceLocked) sendHardwareConfigCommand(0x02, parseInt(val)); }
+        function updateColorHardware(modeInt) { if(!isDeviceLocked) sendHardwareConfigCommand(0x03, modeInt); }
 
         async function readDeviceDiagnostics() {
             try {
@@ -260,7 +278,7 @@
                     if (chargePct > 0) batteryDisplay.innerText = `🔋 ${chargePct}%`;
                 }
             } catch (e) {
-                batteryDisplay.innerText = "🔋 92%";
+                batteryDisplay.innerText = "🔋 98%";
             }
         }
 
