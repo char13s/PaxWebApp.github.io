@@ -138,12 +138,15 @@
         ];
 
         connectBtn.addEventListener('click', async () => {
-            try {
-                connectBtn.innerText = "Pairing...";
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ namePrefix: 'PAX' }],
-                    optionalServices: [PAX_SERVICE_UUID]
-                });
+    try {
+        connectBtn.innerText = "Pairing...";
+        // SWAP TO THIS:
+        const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [PAX_SERVICE_UUID]
+        });
+
+        const server = await device.gatt.connect();
 
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService(PAX_SERVICE_UUID);
