@@ -85,12 +85,10 @@
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase block">Haptics (Vibration)</label>
                         <input type="range" min="0" max="3" value="1" class="w-full" oninput="updateHapticsHardware(this.value)">
                     </div>
-
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase block">Brightness</label>
                         <input type="range" min="0" max="100" value="60" class="w-full" oninput="updateBrightnessHardware(this.value)">
                     </div>
-
                     <div class="space-y-2 pt-1">
                         <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase block">Color Theme</label>
                         <div class="flex justify-between items-center px-2">
@@ -123,7 +121,6 @@
         const ovenStatus = document.getElementById('oven-status');
         const modeDesc = document.getElementById('mode-description');
         const lockToggleBtn = document.getElementById('lock-toggle-btn');
-        
         const dialSvg = document.getElementById('dial-svg');
         const dialProgress = document.getElementById('dial-progress');
         const dialKnob = document.getElementById('dial-knob');
@@ -138,15 +135,12 @@
         ];
 
         connectBtn.addEventListener('click', async () => {
-    try {
-        connectBtn.innerText = "Pairing...";
-        // SWAP TO THIS:
-        const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [PAX_SERVICE_UUID]
-        });
-
-        const server = await device.gatt.connect();
+            try {
+                connectBtn.innerText = "Pairing...";
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [PAX_SERVICE_UUID]
+                });
 
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService(PAX_SERVICE_UUID);
@@ -156,10 +150,7 @@
                 statusBadge.classList.remove('hidden');
                 controlsPanel.classList.remove('opacity-25', 'pointer-events-none');
 
-                // Initial diagnostic read
                 await readDeviceDiagnostics();
-
-                // Start automated 5-second background state polling loop
                 pollingIntervalId = setInterval(readDeviceDiagnostics, 5000);
             } catch (e) {
                 console.error(e);
@@ -171,9 +162,7 @@
             const minF = 360, maxF = 420;
             const percentage = (fahrenheit - minF) / (maxF - minF);
             const strokeDash = percentage * 540; 
-            
             dialProgress.style.strokeDasharray = `${strokeDash} 725`;
-            
             const angle = 135 + (percentage * 270);
             const rad = (angle * Math.PI) / 180;
             const cx = 150 + 115 * Math.cos(rad);
@@ -183,25 +172,19 @@
         }
 
         function processDialEvent(e) {
-            // Absolute Lock Short-Circuit: Completely freeze state computation and UX mapping if true
             if (isDeviceLocked) return;
-            
             const rect = dialSvg.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
             const x = clientX - rect.left - 150;
             const y = clientY - rect.top - 150;
-            
             let angle = (Math.atan2(y, x) * 180) / Math.PI;
             if (angle < 0) angle += 360;
-            
             let shiftAngle = angle - 135;
             if (shiftAngle < 0) shiftAngle += 360;
             if (shiftAngle > 270) return;
-
             const pct = shiftAngle / 270;
             const targetF = Math.round(360 + pct * (420 - 360));
-            
             currentTargetFahrenheit = targetF;
             tempDisplay.innerHTML = `${targetF}°<span class="text-3xl align-super">F</span>`;
             updateDialUI(targetF);
@@ -211,7 +194,6 @@
         dialSvg.addEventListener('mousedown', () => { if(!isDeviceLocked) isDraggingDial = true; });
         window.addEventListener('mouseup', () => isDraggingDial = false);
         dialSvg.addEventListener('mousemove', (e) => { if (isDraggingDial && !isDeviceLocked) processDialEvent(e); });
-        
         dialSvg.addEventListener('touchstart', () => { if(!isDeviceLocked) isDraggingDial = true; });
         window.addEventListener('touchend', () => isDraggingDial = false);
         dialSvg.addEventListener('touchmove', (e) => { if (isDraggingDial && !isDeviceLocked) processDialEvent(e); });
@@ -219,30 +201,20 @@
         async function transmitTemperaturePacket(fahrenheit) {
             if (!writeCharacteristic || isWriting) return;
             isWriting = true;
-
             const celsius = (fahrenheit - 32) * (5 / 9);
             const serializedValue = Math.round(celsius * 10);
             const payload = new Uint8Array([0x01, 0x0a, serializedValue & 0xff, (serializedValue >> 8) & 0xff]);
-
-            try {
-                await writeCharacteristic.writeValueWithoutResponse(payload);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                isWriting = false;
-            }
+            try { await writeCharacteristic.writeValueWithoutResponse(payload); } catch (err) { console.error(err); } finally { isWriting = false; }
         }
 
         async function toggleOvenLock() {
             if (!writeCharacteristic) return;
             isDeviceLocked = !isDeviceLocked;
-
             if (isDeviceLocked) {
                 lockToggleBtn.innerText = "🔒";
                 tempDisplay.innerHTML = `OFF`;
                 ovenStatus.innerText = "HEATER LOCKED / OVEN COLD";
                 dialProgress.style.strokeDasharray = `0 725`;
-                
                 const lockPayload = new Uint8Array([0x01, 0x0a, 0x00, 0x00]);
                 try { await writeCharacteristic.writeValueWithoutResponse(lockPayload); } catch(e) {}
             } else {
@@ -257,21 +229,15 @@
         async function sendHardwareConfigCommand(opcode, value) {
             if (!writeCharacteristic) return;
             const packet = new Uint8Array([opcode, value]);
-            try {
-                await writeCharacteristic.writeValueWithoutResponse(packet);
-            } catch (err) {
-                console.error("Configuration payload write dropped:", err);
-            }
+            try { await writeCharacteristic.writeValueWithoutResponse(packet); } catch (err) { console.error(err); }
         }
 
         function changeVaporMode(modeInt, element) {
             if (isDeviceLocked) return;
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('bg-white', 'text-black'));
             element.classList.add('bg-white', 'text-black');
-            
             ovenStatus.innerText = modeDataInfo[modeInt].name;
             modeDesc.innerText = modeDataInfo[modeInt].desc;
-            
             sendHardwareConfigCommand(0x04, modeInt);
         }
 
@@ -280,7 +246,6 @@
         function updateColorHardware(modeInt) { if(!isDeviceLocked) sendHardwareConfigCommand(0x03, modeInt); }
 
         async function readDeviceDiagnostics() {
-            // If dragging, or locked, skip background telemetry reads to avoid race conditions
             if (!writeCharacteristic || isDraggingDial || isWriting) return;
             try {
                 const packetValue = await writeCharacteristic.readValue();
@@ -288,12 +253,7 @@
                     let chargePct = Math.min(100, Math.max(0, packetValue.getUint8(2)));
                     if (chargePct > 0) batteryDisplay.innerText = `🔋 ${chargePct}%`;
                 }
-            } catch (e) {
-                // If baseline testing without hardware, display mock data fallback smoothly
-                if (!writeCharacteristic) {
-                    batteryDisplay.innerText = "🔋 99%";
-                }
-            }
+            } catch (e) { console.error("Telemetry read failed"); }
         }
 
         updateDialUI(360);
