@@ -137,9 +137,10 @@
         connectBtn.addEventListener('click', async () => {
             try {
                 connectBtn.innerText = "Pairing...";
+                
+                // Filter strictly by the PAX 3's unique hardware service string
                 const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [PAX_SERVICE_UUID]
+                    filters: [{ services: [PAX_SERVICE_UUID] }]
                 });
 
                 const server = await device.gatt.connect();
@@ -150,7 +151,10 @@
                 statusBadge.classList.remove('hidden');
                 controlsPanel.classList.remove('opacity-25', 'pointer-events-none');
 
+                // Initial diagnostic read
                 await readDeviceDiagnostics();
+
+                // Start automated 5-second background state polling loop
                 pollingIntervalId = setInterval(readDeviceDiagnostics, 5000);
             } catch (e) {
                 console.error(e);
