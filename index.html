@@ -57,14 +57,16 @@
             </div>
 
             <div class="px-2 mb-5">
-                <button id="connect-btn" class="w-full py-4 bg-white text-black font-bold rounded-full shadow transition active:scale-95 text-base">
-                    Connect Device
-                </button>
-                <div id="status-badge" class="hidden text-center py-2.5 text-sm font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    Connected
-                </div>
-            </div>
-
+    <button id="connect-btn" class="w-full py-4 bg-white text-black font-bold rounded-full shadow transition active:scale-95 text-base">
+        Connect Device
+    </button>
+    <button id="cancel-btn" class="hidden w-full text-center mt-3 text-xs font-semibold text-gray-500 hover:text-gray-300 transition uppercase tracking-wider">
+        ✕ Cancel Pairing
+    </button>
+    <div id="status-badge" class="hidden text-center py-2.5 text-sm font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        Connected
+    </div>
+</div>
             <div id="controls-panel" class="space-y-6 opacity-25 pointer-events-none transition-opacity duration-300 px-1">
                 <div class="space-y-2">
                     <div class="grid grid-cols-3 gap-2">
@@ -134,13 +136,19 @@
             { name: "FLAVOR MODE ACTIVE", desc: "Flavor Mode preserves material profiles. It only applies heat actively during draws, dropping immediately when idle." }
         ];
 
+      // Add this line at the top of your script variables setup:
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        // Replace your old connectBtn listener with this one:
         connectBtn.addEventListener('click', async () => {
             try {
                 connectBtn.innerText = "Pairing...";
+                connectBtn.disabled = true; // Prevent clicking multiple times
+                cancelBtn.classList.remove('hidden'); // Show cancel button
                 
-                // Filter strictly by the PAX 3's unique hardware service string
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [PAX_SERVICE_UUID] }]
+                    filters: [{ namePrefix: 'PAX' }],
+                    optionalServices: [PAX_SERVICE_UUID]
                 });
 
                 const server = await device.gatt.connect();
@@ -148,19 +156,30 @@
                 writeCharacteristic = await service.getCharacteristic(PAX_CHAR_UUID);
 
                 connectBtn.classList.add('hidden');
+                cancelBtn.classList.add('hidden'); // Hide cancel once connected
                 statusBadge.classList.remove('hidden');
                 controlsPanel.classList.remove('opacity-25', 'pointer-events-none');
 
-                // Initial diagnostic read
                 await readDeviceDiagnostics();
-
-                // Start automated 5-second background state polling loop
                 pollingIntervalId = setInterval(readDeviceDiagnostics, 5000);
             } catch (e) {
                 console.error(e);
-                connectBtn.innerText = "Connection Failed - Retry";
+                resetConnectionUI();
             }
         });
+
+        // Add this new click listener and helper function right below it:
+        cancelBtn.addEventListener('click', () => {
+            resetConnectionUI();
+        });
+
+        function resetConnectionUI() {
+            connectBtn.innerText = "Connect Device";
+            connectBtn.disabled = false;
+            connectBtn.classList.remove('hidden');
+            cancelBtn.classList.add('hidden');
+            statusBadge.classList.add('hidden');
+        }
 
         function updateDialUI(fahrenheit) {
             const minF = 360, maxF = 420;
